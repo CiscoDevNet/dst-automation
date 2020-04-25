@@ -20,6 +20,16 @@ except ImportError:
 
 
 def run_traceroute(host):
+    """
+    Run ICMP traceroute and return a list of the first three hops.
+
+    Parameters:
+        host (string): Target host to which to traceroute.
+
+    Returns:
+        tuple: Tuple of the first three hops along the path.
+    """
+    
     command = ["traceroute", "-I", "-4", "-q", "1", "-n", "-m", "3", "-w", "1", host]
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
