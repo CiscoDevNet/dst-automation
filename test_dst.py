@@ -238,14 +238,17 @@ def main():
                         )
                     )
                     tests_passed = False
+                    break
+
+                i += 1
 
     done(msg)
 
-    if not tests_passed:
-        while True:
-            ans = input("XXX: Hit 'y' and Enter to continue...")
-            if ans.lower().startswith("y"):
-                break
+    # if not tests_passed:
+    #     while True:
+    #         ans = input("XXX: Hit 'y' and Enter to continue...")
+    #         if ans.lower().startswith("y"):
+    #             break
 
     msg = "Resetting the test topology..."
 
