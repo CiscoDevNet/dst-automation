@@ -7,6 +7,8 @@ import time
 import sys
 import os
 import tempfile
+import json
+import subprocess
 from shutil import which
 from yaml import load, dump
 
@@ -72,7 +74,16 @@ End Spinner code from StackOverflow
 """
 
 
-def build_ansible_command(playb, inv, avars):
+def run_ansible_command(playb, inv, avars):
+    """
+    Run Ansible with a given playbook and inventory
+
+    Parameters:
+        playb (string): The name of the playbook to run
+        inv (file object): The file pointer containing the Ansible inventory
+        avars (file object): The file pointer containing the Ansible variables
+    """
+
     python_exe = get_python_interpreter()
     command = [
         "ansible-playbook",
@@ -85,7 +96,33 @@ def build_ansible_command(playb, inv, avars):
         "ansible/{}".format(playb),
     ]
 
-    return command
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = ""
+
+    for line in iter(p.stdout.readline, b""):
+        result += line.decode("utf-8")
+
+    p.wait()
+
+    if p.returncode != 0:
+        resd = json.loads(result)
+        emsg = "Unknown Error"
+        ehost = "Unknown Host"
+        found_failure = False
+        for block in resd["plays"][0]["tasks"]:
+            for host, properties in list(block["hosts"].items()):
+                if "failed" in properties and properties["failed"]:
+                    ehost = host
+                    if "msg" in properties:
+                        emsg = properties["msg"]
+                    elif "stdout" in properties:
+                        emsg = "\n".join(properties["stdout"])
+                    found_failure = True
+                    break
+            if found_failure:
+                break
+
+        raise Exception("Failed to run the Ansible playbook on host {}: {}".format(ehost, emsg))
 
 
 def done(msg):

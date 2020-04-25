@@ -6,3 +6,6 @@ config.yaml
 
 # Python stuff
 *__pycache__/
+
+# Vim swap files
+*.swp

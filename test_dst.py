@@ -6,11 +6,11 @@ from dst_topology import DSTTopology
 import argparse
 import sys
 import subprocess
-import json
 from dst_utils import *
 import time
 import tempfile
 import os
+import re
 from yaml import load, dump
 
 try:
@@ -19,12 +19,31 @@ except ImportError:
     from yaml import Loader, Dumper
 
 
+def run_traceroute(host):
+    command = ["traceroute", "-I", "-4", "-q", "1", "-n", "-m", "3", "-w", "1", host]
+
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    result = ""
+
+    for line in iter(p.stdout.readline, b""):
+        result += line.decode("utf-8")
+
+    p.wait()
+
+    # Extract each hop IP from the traceroute output.
+    m = re.findall(r"[123]\s+([\d\.\*]+)\s", result)
+
+    return m
+
+
 def main():
     dstt = None
     fw_ip = None
     conf = None
     args = None
     msg = None
+    def_routing = None
+    tests_passed = True
 
     parser = argparse.ArgumentParser(prog=sys.argv[0], description="Test a set of Dynamic Split Tunnel configs")
     parser.add_argument(
@@ -59,10 +78,14 @@ def main():
 
     check_vars("test", conf)
 
-    for var in ("local_hosts", "tunnel_hosts", "canary_host"):
+    for var in ("local_hosts", "tunnel_hosts", "canary_host", "vpn_hop"):
         if var not in conf["test"]:
             print("ERROR: Variable '{}' not defined in the 'test' section in the config file.".format(var))
             sys.exit(1)
+
+    if not re.match(r"[\d\.]", conf["test"]["canary_host"]):
+        print("ERROR: The canary_host must be an IPv4 address.")
+        sys.exit(1)
 
     os.environ["VIRL2_USER"] = conf["cml"]["user"]
     os.environ["VIRL2_PASS"] = conf["cml"]["pass"]
@@ -104,8 +127,6 @@ def main():
         with Spinner("Waiting for topology to be ready..."):
             while not dstt.is_ready():
                 time.sleep(1)
-            # Sleep for an additional minute to wait for the router to pass traffic.
-            time.sleep(60)
     except Exception as e:
         print("ERROR: Failed to wait for topology to be ready: {}".format(e))
         try:
@@ -120,7 +141,7 @@ def main():
     try:
         fw_ip = dstt.get_fw_ip()
         if not fw_ip:
-            if "test" not in conf or "firewall_ip" not in conf["test"]:
+            if "firewall_ip" not in conf["test"]:
                 print(
                     "ERROR: Unable to dynamically obtain the firewall IP and a static IP has not been defined in {}; define 'firewall_ip' in the 'test' section of {}".format(
                         args.config, args.config
@@ -161,50 +182,79 @@ def main():
     os.environ["ANSIBLE_HOST_KEY_CHECKING"] = "False"
 
     with Spinner(msg):
-        command = build_ansible_command("dst-playbook.yaml", inv, avars)
-
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        result = ""
-
-        for line in iter(p.stdout.readline, b""):
-            result += line.decode("utf-8")
-
-        p.wait()
-
-        if p.returncode != 0:
+        try:
+            run_ansible_command("dst-playbook.yaml", inv, avars)
+        except Exception as e:
             print("")
-            print("ERROR: Failed to execute the test:\n{}".format(json.dumps(json.loads(result), indent=4)))
+            print("ERROR: {}".format(e))
             try:
                 cleanup(dstt=dstt, inv=inv, avars=avars)
             except:
                 pass
             sys.exit(1)
-        print("XXX: DEBUG:\n'{}'".format(json.dumps(json.loads(result), indent=4)))
 
     done(msg)
+
+    msg = "Testing canary to get default routing..."
+    with Spinner(msg):
+        def_routing = run_traceroute(conf["test"]["canary_host"])
+
+    done(msg)
+
     print("")
     while True:
         print("Dynamic Split Tunnel VPN is ready to test.")
-        ans = input("Point AnyConnect to {} then when connecting, hit 'y' and press Enter in this window to start the test...".format(fw_ip))
+        ans = input("Point AnyConnect to {} then when connected, hit 'y' and press Enter in this window to start the test...".format(fw_ip))
         if ans.lower().startswith("y"):
             break
+    print("")
+
+    msg = "Testing VPN tunneled hosts..."
+    with Spinner(msg):
+        for host in conf["test"]["tunnel_hosts"]:
+            rt = run_traceroute(host)
+            if rt[2] != conf["test"]["vpn_hop"] and rt[2] != host:
+                print("")
+                sys.stdout.write(
+                    "\033[33mWARNING\033[0m: Traffic to host {} is not being properly tunneled over the VPN; first three hops are {}.\n".format(
+                        host, ", ".join(rt)
+                    )
+                )
+                tests_passed = False
+
+    done(msg)
+
+    msg = "Testing Split Tunnel hosts..."
+    with Spinner(msg):
+        for host in conf["test"]["local_hosts"]:
+            rt = run_traceroute(host)
+            i = 0
+            for hop in rt:
+                if rt[i] != def_routing[i]:
+                    print("")
+                    sys.stdout.write(
+                        "\033[33mWARNING\033[0m: Traffic to host {} is not being properly routed locally; first three hops are {}.\n".format(
+                            host, ", ".join(rt)
+                        )
+                    )
+                    tests_passed = False
+
+    done(msg)
+
+    if not tests_passed:
+        while True:
+            ans = input("XXX: Hit 'y' and Enter to continue...")
+            if ans.lower().startswith("y"):
+                break
 
     msg = "Resetting the test topology..."
 
     with Spinner(msg):
-        command = build_ansible_command("reset-test-playbook.yaml", inv, avars)
-
-        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        restul = ""
-
-        for line in iter(p.stdout.readline, b""):
-            result += line.decode("utf-8")
-
-        p.wait()
-
-        if p.returncode != 0:
+        try:
+            run_ansible_command("reset-test-playbook.yaml", inv, avars)
+        except Exception as e:
             print("")
-            print("WARNING: Failed to reset the topology config:\n{}".format(json.dumps(json.loads(result), indent=4)))
+            print("WARNING: Failed to reset the topology config: {}".format(e))
 
     done(msg)
 
@@ -213,6 +263,12 @@ def main():
     except Exception as e:
         print("")
         print("WARNING: Failed to cleanup after the test: {}".format(e))
+        sys.exit(1)
+
+    if tests_passed:
+        sys.stdout.write("All tests \033[32mPASSED\033[0m!\n")
+    else:
+        sys.stdout.write("One or more tests \033[31mFAILED\033[0m!\n")
         sys.exit(1)
 
 

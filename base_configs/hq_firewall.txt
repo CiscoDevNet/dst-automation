@@ -157,6 +157,8 @@ policy-map global_policy
   inspect sip  
   inspect skinny  
   inspect icmp 
+ class class-default
+  set connection decrement-ttl
 policy-map type inspect dns migrated_dns_map_2
  parameters
   message-length maximum client auto

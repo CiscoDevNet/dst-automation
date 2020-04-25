@@ -10,6 +10,15 @@
           file: "{{ dst_variable_file }}"
         delegate_to: localhost
 
+      - name: Ensure reachability to an external host
+        asa_command:
+          commands:
+            - ping {{ canary_host }}
+          retries: 30
+          wait_for:
+            - result[0] contains !!!!!
+        tags: test
+
       - name: Deploy Smart License token for testing
         asa_command:
           commands:

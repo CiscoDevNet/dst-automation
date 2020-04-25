@@ -10,8 +10,9 @@
           file: "{{ dst_variable_file }}"
         delegate_to: localhost
 
-      - name: Deregister the Smart License license
+      - name: Deregister the Smart License license and clear VPNs
         asa_command:
           commands:
             - license smart deregister
+            - vpn-sessiondb logoff all noconfirm
         tags: test

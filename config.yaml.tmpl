@@ -12,6 +12,11 @@ dst:
 
 test:
   firewall_ip: 192.168.10.114
+
+  # This must be the same as the IP address on interface GigabitEthernet0/1 of the internet-router
+  # You won't need to change this unless you change the internet-router's base config.
+  vpn_hop: 172.31.113.114
+  
   smart_license_token: TOKEN_HERE
   ansible_user: admin
   ansible_password: cisco123
