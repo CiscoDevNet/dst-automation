@@ -128,6 +128,9 @@ def run_ansible_command(playb, inv, avars):
 def done(msg):
     """
     Print a message and the string DONE to say the step has been completed.
+
+    Parameters:
+        msg (string): The message to print before the word "DONE."
     """
 
     print(msg + "DONE.")
@@ -136,6 +139,11 @@ def done(msg):
 def cleanup(dstt=None, inv=None, avars=None):
     """
     Cleanup the various transient elements of a test and Ansible run.
+
+    Parameters:
+        dstt (DSTTopology): An optional DSTTopology object to cleanup.
+        inv (file object): An optional file descriptor pointer to an Ansible inventory file to remove.
+        avars (file object): An optional file descriptor pointer to an Ansible variable file to remove.
     """
 
     e = None
@@ -173,6 +181,13 @@ def cleanup(dstt=None, inv=None, avars=None):
 
 
 def check_sections(type, config):
+    """
+    Check that the right sections appear in the YAML config file.
+
+    Parameters:
+        type (string): Either "test" or "production" to indicate the type of execution being run.
+        config (dict): A dictionary representing the current config file.
+    """
     for sec in (type, "dst"):
         if sec not in config:
             print("ERROR: Section '{}' not found in config file.".format(sec))
@@ -180,6 +195,13 @@ def check_sections(type, config):
 
 
 def check_vars(type, config):
+    """
+    Check that the right variables appear in the right config file sections.
+
+    Parameters:
+        type (string): Either "test" or "production" to indicate the type of execution being run.
+        config (dict): A dictionary representing the current config file.
+    """
     for var in ("custom_name", "domains"):
         if var not in config["dst"]:
             print("ERROR: Variable '{}' not defined in 'dst' section in config file.".format(var))
@@ -194,6 +216,9 @@ def check_vars(type, config):
 def get_python_interpreter():
     """
     Attempt to locate the current Python interpreter.
+
+    Returns:
+        string: The path to the current Python interpreter
     """
 
     python_exe = which("python")
