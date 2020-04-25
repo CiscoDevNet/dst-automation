@@ -1,0 +1,8 @@
+# Virtual envs
+*env/
+
+# Rendered config file
+config.yaml
+
+# Python stuff
+*__pycache__/

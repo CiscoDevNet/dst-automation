@@ -1,0 +1,42 @@
+---
+cml:
+  host: 192.168.10.229
+  user: admin
+  pass: cisco123
+
+dst:
+  custom_name: exclude_domains
+  # List of domains to exclude from the VPN (hosts in these domains will not tunnel back over the VPN)
+  domains:
+    - webex.com
+
+test:
+  firewall_ip: 192.168.10.114
+  smart_license_token: ZWQ1NjBkNDUtYmE5Ni00ZTcxLTk5ZDUtMmY4NjFkOGE3YjEwLTE1ODk3MzA3%0AMjM4MTN8WURYR0d5VWdwV1NsbW9mQ29zNmRIaEFSUTJySDJ6VFpBdzEwMFdI%0AWSt0az0%3D%0A
+  ansible_user: admin
+  ansible_password: cisco123
+  ansible_become_password: cisco123
+  group_policies:
+    - DfltGrpPolicy
+
+  # List of hosts that should be forwarded outside the tunnel
+  local_hosts:
+    - cisco.webex.com
+
+  # List of hosts that should be tunneled back across the VPN
+  tunnel_hosts:
+    - 8.8.8.8
+    - 10.0.0.2
+    - www.microsoft.com
+
+  # A single host to learn the local routing (i.e., before the VPN is established)
+  canary_host: 8.8.8.8
+
+production:
+  ansible_user: bogus
+  ansible_password: bogus
+  ansible_become_password: bogus
+  group_policies:
+    - bogus
+  firewalls:
+    - 10.10.10.10

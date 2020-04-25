@@ -1,0 +1,17 @@
+---
+
+  - name: Tear down the test environment
+    hosts: all
+    gather_facts: false
+    connection: network_cli
+    tasks:
+      - name: Load runtime variables
+        include_vars:
+          file: "{{ dst_variable_file }}"
+        delegate_to: localhost
+
+      - name: Deregister the Smart License license
+        asa_command:
+          commands:
+            - license smart deregister
+        tags: test

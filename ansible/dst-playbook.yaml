@@ -1,0 +1,46 @@
+---
+
+  - name: Optionally test and then deploy a Dynamic Split Tunnel config
+    hosts: all
+    gather_facts: false
+    connection: network_cli
+    tasks:
+      - name: Load runtime variables
+        include_vars:
+          file: "{{ dst_variable_file }}"
+        delegate_to: localhost
+
+      - name: Deploy Smart License token for testing
+        asa_command:
+          commands:
+            - license smart register idtoken {{ smart_license_token }}
+        when: smart_license_token is defined
+        tags: test
+
+      - name: Copy VPN profile to firewall
+        net_put:
+          protocol: scp
+          src: "{{ dst_base_dir }}/profiles/DST.xml"
+          dest: disk0:/DST.xml
+        tags: test
+
+      - name: Configure Dynamic Split Tunneling
+        asa_config:
+          lines:
+            - anyconnect-custom-attr dynamic-split-exclude-domains description Exclude domains from tunneling
+          parents:
+            - webvpn
+
+      - name: Add domains to DST config
+        asa_config:
+          lines:
+            - anyconnect-custom-data dynamic-split-exclude-domains {{ custom_name }} {{ item }},
+        with_items: "{{ domains }}"
+
+      - name: Configure DST for the VPN group-policies
+        asa_config:
+          lines:
+            - anyconnect-custom dynamic-split-exclude-domains value {{ custom_name }}
+          parents:
+            - group-policy {{ item }} attributes
+        with_items: "{{ group_policies }}"

@@ -1,0 +1,188 @@
+hostname hq-firewall
+enable password $sha512$5000$oOq5LwR9EpEOnziW0pKHFw==$nMlARWlbJEeVYu1NQYMb+w== pbkdf2
+!
+license smart
+ feature tier standard
+ throughput level 10G
+names
+no mac-address auto
+ip local pool AnyConnectPool 10.100.0.100-10.100.0.254 mask 255.255.255.0
+
+!
+interface GigabitEthernet0/0
+ nameif Internet
+ security-level 0
+ ip address 172.31.113.115 255.255.255.254
+ no shutdown
+!
+interface GigabitEthernet0/1
+ nameif HQ
+ security-level 100
+ ip address 10.0.0.1 255.255.255.0 
+ no shutdown
+!
+interface Management0/0
+ nameif Management
+ security-level 100
+ ip address 192.168.10.114 255.255.255.0
+ no shutdown
+!
+ftp mode passive
+dns domain-lookup Internet
+dns server-group DefaultDNS
+ name-server 192.168.255.1 
+same-security-traffic permit intra-interface
+object network HQ
+ subnet 10.0.0.0 255.255.255.0
+object network VPNRange
+ subnet 10.100.0.0 255.255.255.0
+access-list local_lan standard permit host 0.0.0.0
+access-list Internet_in extended permit icmp any any
+access-group Internet_in in interface Internet
+logging enable
+logging monitor debugging
+mtu HQ 1500
+mtu Internet 1500
+mtu Management 1500
+no failover
+no monitor-interface service-module 
+icmp unreachable rate-limit 1 burst-size 1
+icmp permit any HQ
+icmp permit any Internet
+icmp permit any Management
+no asdm history enable
+arp timeout 14400
+no arp permit-nonconnected
+arp rate-limit 8192
+nat (Management,Internet) source dynamic VPNRange interface
+nat (HQ,Internet) source static HQ HQ destination static VPNRange VPNRange
+!
+object network HQ
+ nat (HQ,Internet) dynamic interface
+object network VPNRange
+ nat (Internet,Internet) dynamic interface
+route Internet 0.0.0.0 0.0.0.0 172.31.113.114 1
+timeout xlate 3:00:00
+timeout pat-xlate 0:00:30
+timeout conn 1:00:00 half-closed 0:10:00 udp 0:02:00 sctp 0:02:00 icmp 0:00:02
+timeout sunrpc 0:10:00 h323 0:05:00 h225 1:00:00 mgcp 0:05:00 mgcp-pat 0:05:00
+timeout sip 0:30:00 sip_media 0:02:00 sip-invite 0:03:00 sip-disconnect 0:02:00
+timeout sip-provisional-media 0:02:00 uauth 0:05:00 absolute
+timeout tcp-proxy-reassembly 0:01:00
+timeout floating-conn 0:00:00
+timeout conn-holddown 0:00:15
+timeout igp stale-route 0:01:10
+user-identity default-domain LOCAL
+aaa authentication ssh console LOCAL 
+aaa authentication enable console LOCAL 
+aaa authentication http console LOCAL 
+aaa authorization command LOCAL 
+aaa authentication login-history
+no snmp-server location
+no snmp-server contact
+crypto ipsec security-association pmtu-aging infinite
+telnet timeout 5
+crypto key zeroize rsa noconfirm
+crypto key generate rsa modulus 2048 noconfirm
+ssh stricthostkeycheck
+ssh pubkey-chain
+ssh 0.0.0.0 0.0.0.0 Management
+ssh timeout 5
+ssh version 2
+ssh scopy enable
+console timeout 0
+console serial
+threat-detection basic-threat
+threat-detection statistics access-list
+no threat-detection statistics tcp-intercept
+webvpn
+ enable Internet
+ enable Management
+ anyconnect-custom-attr DeferredUpdateAllowed description "Allow user to skip anyconnect upgrades"
+ anyconnect-custom-attr dynamic-split-exclude-domains description Exclude domains from tunneling
+ hsts
+  enable
+  max-age 31536000
+  include-sub-domains
+  no preload
+ anyconnect image disk0:/anyconnect-linux64-4.8.03043-webdeploy-k9.pkg 1
+ anyconnect enable
+ anyconnect profiles DST disk0:/DST.xml
+ cache
+  disable
+ error-recovery disable
+group-policy DfltGrpPolicy attributes
+ banner value Welcome to the Dynamic Split Tunnel Test!
+ dns-server value 192.168.255.1
+ vpn-simultaneous-logins 10
+ vpn-idle-timeout 600
+ vpn-tunnel-protocol ikev1 l2tp-ipsec ssl-client ssl-clientless
+ split-tunnel-policy excludespecified
+ split-tunnel-network-list value local_lan
+ split-tunnel-all-dns enable
+ address-pools value AnyConnectPool
+ webvpn
+  anyconnect profiles value DST type user
+  anyconnect mtu 1300
+username admin password $sha512$5000$h5wceuiXDZT4PJIUx+QbwQ==$Zu9DyLxgg3qa7IcG42hI4Q== pbkdf2 privilege 15
+username admin attributes
+ service-type admin
+username home-user password $sha512$5000$H9PweTikPpuP6MatgT9D+A==$G16aDOl7YiqsCmBcbhvL4w== pbkdf2 privilege 1
+username home-user attributes
+ service-type remote-access
+!
+class-map inspection_default
+ match default-inspection-traffic
+!
+!
+policy-map type inspect dns preset_dns_map
+ parameters
+  message-length maximum client auto
+  message-length maximum 512
+  no tcp-inspection
+policy-map global_policy
+ class inspection_default
+  inspect ip-options 
+  inspect netbios 
+  inspect rtsp 
+  inspect sunrpc 
+  inspect tftp 
+  inspect xdmcp 
+  inspect ftp 
+  inspect h323 h225 
+  inspect h323 ras 
+  inspect rsh 
+  inspect esmtp 
+  inspect sqlnet 
+  inspect sip  
+  inspect skinny  
+  inspect icmp 
+policy-map type inspect dns migrated_dns_map_2
+ parameters
+  message-length maximum client auto
+  message-length maximum 512
+  no tcp-inspection
+policy-map type inspect dns migrated_dns_map_1
+ parameters
+  message-length maximum client auto
+  message-length maximum 512
+  no tcp-inspection
+!
+service-policy global_policy global
+prompt hostname context 
+no call-home reporting anonymous
+call-home
+ profile CiscoTAC-1
+  no active
+  destination address http https://tools.cisco.com/its/service/oddce/services/DDCEService
+  destination address email callhome@cisco.com
+  destination transport-method http
+  subscribe-to-alert-group diagnostic
+  subscribe-to-alert-group environment
+  subscribe-to-alert-group inventory periodic monthly
+  subscribe-to-alert-group configuration periodic monthly
+  subscribe-to-alert-group telemetry periodic daily
+ profile License
+  destination address http https://tools.cisco.com/its/service/oddce/services/DDCEService
+  destination transport-method http
+: end
