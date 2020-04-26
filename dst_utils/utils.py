@@ -74,7 +74,7 @@ End Spinner code from StackOverflow
 """
 
 
-def run_ansible_command(playb, inv, avars):
+def run_ansible_command(playb, inv, avars, skip_tags=None):
     """
     Run Ansible with a given playbook and inventory
 
@@ -96,6 +96,9 @@ def run_ansible_command(playb, inv, avars):
         "ansible/{}".format(playb),
     ]
 
+    if skip_tags:
+        command += ["--skip-tags", skip_tags]
+
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     result = ""
 
@@ -106,23 +109,25 @@ def run_ansible_command(playb, inv, avars):
 
     if p.returncode != 0:
         resd = json.loads(result)
-        emsg = "Unknown Error"
+        emsg = ""
         ehost = "Unknown Host"
+        etask = "Unknown Task"
         found_failure = False
         for block in resd["plays"][0]["tasks"]:
             for host, properties in list(block["hosts"].items()):
                 if "failed" in properties and properties["failed"]:
                     ehost = host
+                    etask = block["task"]["name"]
                     if "msg" in properties:
-                        emsg = properties["msg"]
-                    elif "stdout" in properties:
-                        emsg = "\n".join(properties["stdout"])
+                        emsg += properties["msg"] + "\n"
+                    if "stdout" in properties:
+                        emsg += "\n".join(properties["stdout"])
                     found_failure = True
                     break
             if found_failure:
                 break
 
-        raise Exception("Failed to run the Ansible playbook on host {}: {}".format(ehost, emsg))
+        raise Exception("Failed to run the Ansible playbook task '{}' on host {}: {}".format(etask, ehost, emsg))
 
 
 def done(msg):

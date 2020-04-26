@@ -26,6 +26,15 @@
         when: smart_license_token is defined
         tags: test
 
+      - name: Wait for Smart License to be registered
+        asa_command:
+          commands:
+            - show license status
+          retries: 60
+          wait_for:
+            - "result[0] contains Status: REGISTERED"
+        tags: test
+
       - name: Copy VPN profile to firewall
         net_put:
           protocol: scp
