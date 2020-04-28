@@ -18,19 +18,20 @@ interface GigabitEthernet0/0
 interface GigabitEthernet0/1
  nameif HQ
  security-level 100
- ip address 10.0.0.1 255.255.255.0 
+ ip address 10.0.0.1 255.255.255.0
  no shutdown
 !
 interface Management0/0
  nameif Management
  security-level 100
- ip address 192.168.10.114 255.255.255.0
+ ! CHANGE THIS IP !!!
+ ip address 192.168.10.177 255.255.255.0
  no shutdown
 !
 ftp mode passive
 dns domain-lookup Internet
 dns server-group DefaultDNS
- name-server 192.168.255.1 
+ name-server 192.168.255.1
 same-security-traffic permit intra-interface
 object network HQ
  subnet 10.0.0.0 255.255.255.0
@@ -45,7 +46,7 @@ mtu HQ 1500
 mtu Internet 1500
 mtu Management 1500
 no failover
-no monitor-interface service-module 
+no monitor-interface service-module
 icmp unreachable rate-limit 1 burst-size 1
 icmp permit any HQ
 icmp permit any Internet
@@ -73,10 +74,10 @@ timeout floating-conn 0:00:00
 timeout conn-holddown 0:00:15
 timeout igp stale-route 0:01:10
 user-identity default-domain LOCAL
-aaa authentication ssh console LOCAL 
-aaa authentication enable console LOCAL 
-aaa authentication http console LOCAL 
-aaa authorization command LOCAL 
+aaa authentication ssh console LOCAL
+aaa authentication enable console LOCAL
+aaa authentication http console LOCAL
+aaa authorization command LOCAL
 aaa authentication login-history
 no snmp-server location
 no snmp-server contact
@@ -142,21 +143,21 @@ policy-map type inspect dns preset_dns_map
   no tcp-inspection
 policy-map global_policy
  class inspection_default
-  inspect ip-options 
-  inspect netbios 
-  inspect rtsp 
-  inspect sunrpc 
-  inspect tftp 
-  inspect xdmcp 
-  inspect ftp 
-  inspect h323 h225 
-  inspect h323 ras 
-  inspect rsh 
-  inspect esmtp 
-  inspect sqlnet 
-  inspect sip  
-  inspect skinny  
-  inspect icmp 
+  inspect ip-options
+  inspect netbios
+  inspect rtsp
+  inspect sunrpc
+  inspect tftp
+  inspect xdmcp
+  inspect ftp
+  inspect h323 h225
+  inspect h323 ras
+  inspect rsh
+  inspect esmtp
+  inspect sqlnet
+  inspect sip
+  inspect skinny
+  inspect icmp
  class class-default
   set connection decrement-ttl
 policy-map type inspect dns migrated_dns_map_2
@@ -171,7 +172,7 @@ policy-map type inspect dns migrated_dns_map_1
   no tcp-inspection
 !
 service-policy global_policy global
-prompt hostname context 
+prompt hostname context
 no call-home reporting anonymous
 call-home
  profile CiscoTAC-1
