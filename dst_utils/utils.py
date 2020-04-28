@@ -1,3 +1,21 @@
+"""
+Utility functions for the DST automation use case.
+
+Copyright (c) 2020 Cisco and/or its affiliates.
+This software is licensed to you under the terms of the Cisco Sample
+Code License, Version 1.1 (the "License"). You may obtain a copy of the
+License at
+               https://developer.cisco.com/docs/licenses
+
+All use of the material herein must be in accordance with the terms of
+the License. All rights not expressly granted by the License are
+reserved. Unless required by applicable law or agreed to separately in
+writing, software distributed under the License is distributed on an "AS
+IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied.
+
+"""
+
 from __future__ import print_function
 from builtins import next
 from builtins import object
@@ -236,6 +254,13 @@ def get_python_interpreter():
 def build_ansible_inventory(config=None, fw_ip=None):
     """
     Build a basic ini-style Ansible inventory file.
+
+    Parameters:
+        config (dict): Optional dictionary representing the current configuration file (used in production mode).
+        fw_ip (string): Optional firewall IP address (used in test mode).
+
+    Returns:
+        file object: File descriptor of the file containing the Ansible inventory.
     """
 
     inv = tempfile.NamedTemporaryFile(mode="w", delete=False)
@@ -256,6 +281,13 @@ def build_ansible_inventory(config=None, fw_ip=None):
 def build_ansible_vars(config, type):
     """
     Build a temporary YAML file to hold all of the Ansible variables.
+
+    Parameters:
+        config (dict): Dictionary representing the current configuration file.
+        type (string): Either "test" or "production" to indicate the type of execution being run.
+
+    Returns:
+        file object: File descriptor of the file containing the Ansible variables.
     """
 
     vard = {}
