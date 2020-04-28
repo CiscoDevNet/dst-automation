@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+"""
+Test Dynamic Split Tunneling configuration using Cisco Modeling Labs.
+
+Copyright (c) 2020 Cisco and/or its affiliates.
+This software is licensed to you under the terms of the Cisco Sample
+Code License, Version 1.1 (the "License"). You may obtain a copy of the
+License at
+               https://developer.cisco.com/docs/licenses
+
+All use of the material herein must be in accordance with the terms of
+the License. All rights not expressly granted by the License are
+reserved. Unless required by applicable law or agreed to separately in
+writing, software distributed under the License is distributed on an "AS
+IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+or implied.
+
+"""
 
 from __future__ import print_function
 from builtins import input
@@ -29,7 +46,7 @@ def run_traceroute(host):
     Returns:
         tuple: Tuple of the first three hops along the path.
     """
-    
+
     command = ["traceroute", "-I", "-4", "-q", "1", "-n", "-m", "3", "-w", "1", host]
 
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -222,35 +239,45 @@ def main():
     msg = "Testing VPN tunneled hosts..."
     with Spinner(msg):
         for host in conf["test"]["tunnel_hosts"]:
-            rt = run_traceroute(host)
+            imsg = "\tInspecting route to {}".format(host)
+            rt = None
+            print("")
+            with Spinner(imsg):
+                rt = run_traceroute(host)
+            bad = False
             if rt[2] != conf["test"]["vpn_hop"] and rt[2] != host:
-                print("")
-                sys.stdout.write(
-                    "\033[33mWARNING\033[0m: Traffic to host {} is not being properly tunneled over the VPN; first three hops are {}.\n".format(
-                        host, ", ".join(rt)
-                    )
-                )
+                bad = True
                 tests_passed = False
+
+            if bad:
+                sys.stdout.write(imsg + "[\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
+            else:
+                sys.stdout.write(imsg + "[\033[32mOK\033[0m] {}\n".format(", ".join(rt)))
 
     done(msg)
 
     msg = "Testing Split Tunnel hosts..."
     with Spinner(msg):
         for host in conf["test"]["local_hosts"]:
-            rt = run_traceroute(host)
+            imsg = "\tInspecting route to {}".format(host)
+            rt = None
+            print("")
+            with Spinner(imsg):
+                rt = run_traceroute(host)
             i = 0
+            bad = False
             for hop in rt:
                 if rt[i] != def_routing[i]:
-                    print("")
-                    sys.stdout.write(
-                        "\033[33mWARNING\033[0m: Traffic to host {} is not being properly routed locally; first three hops are {}.\n".format(
-                            host, ", ".join(rt)
-                        )
-                    )
+                    bad = True
                     tests_passed = False
                     break
 
                 i += 1
+
+            if bad:
+                sys.stdout.write(imsg + "[\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
+            else:
+                sys.stdout.write(imsg + "[\033[32mOK\033[0m] {}\n".format(", ".join(rt)))
 
     done(msg)
 
