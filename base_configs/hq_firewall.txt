@@ -24,8 +24,9 @@ interface GigabitEthernet0/1
 interface Management0/0
  nameif Management
  security-level 100
- ! CHANGE THIS IP !!!
+ ! CHANGE ME!!!
  ip address 192.168.10.177 255.255.255.0
+ ! END CHANGE ME
  no shutdown
 !
 ftp mode passive
@@ -38,6 +39,9 @@ object network HQ
 object network VPNRange
  subnet 10.100.0.0 255.255.255.0
 access-list local_lan standard permit host 0.0.0.0
+! CHANGE ME!!!
+access-list local_lan standard permit 192.168.10.0 255.255.255.0
+! END CHANGE ME
 access-list Internet_in extended permit icmp any any
 access-group Internet_in in interface Internet
 logging enable
