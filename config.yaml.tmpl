@@ -1,43 +1,53 @@
 ---
 cml:
+  # CHANGE ME: CML IP, username, and password used for testing
   host: 192.168.10.229
   user: admin
   pass: cisco123
 
 dst:
+  # Name of the anyconnect custom data property for DST (unless you have an existing DST config, this shouldn't need to be changed).
   custom_name: exclude_domains
-  # List of domains to exclude from the VPN (hosts in these domains will not tunnel back over the VPN)
+
+  # CHANGE ME: List of domains to exclude from the VPN (hosts in these domains will not tunnel back over the VPN)
   domains:
     - webex.com
 
 test:
+  # CHANGE ME: IP address you assign to the HQ Firewall's Management0/0 interface.
   firewall_ip: 192.168.10.114
 
   # This must be the same as the IP address on interface GigabitEthernet0/1 of the internet-router
   # You won't need to change this unless you change the internet-router's base config.
   vpn_hop: 172.31.113.114
-  
+
+  # CHANGE ME: Smart License token to license the ASAv to allow for more than the default 100 connections
   smart_license_token: TOKEN_HERE
+
+  # These should not need to be changed.
   ansible_user: admin
   ansible_password: cisco123
   ansible_become_password: cisco123
   group_policies:
     - DfltGrpPolicy
 
-  # List of hosts that should be forwarded outside the tunnel
+  # CHANGE ME: List of hosts that should be forwarded outside the tunnel
   local_hosts:
     - cisco.webex.com
 
-  # List of hosts that should be tunneled back across the VPN
+  # CHANGE ME: List of hosts that should be tunneled back across the VPN
   tunnel_hosts:
     - 8.8.8.8
-    - 10.0.0.2
     - www.microsoft.com
 
-  # A single host to learn the local routing (i.e., before the VPN is established)
+  # CHANGE ME: A single host to learn the local routing (i.e., before the VPN is established)
   canary_host: 8.8.8.8
 
+  # The HQ server IP (this shouldn't need to be changed).
+  hq_server_ip: 10.0.0.2
+
 production:
+  # CHANGE ME: Production ASA username, password, enable password, set of group policies, and list of production firewall IPs
   ansible_user: bogus
   ansible_password: bogus
   ansible_become_password: bogus
