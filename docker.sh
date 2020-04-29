@@ -11,7 +11,7 @@ if [ -n "${DST_DEV}" ]; then
   cache="--no-cache --pull"
 fi
 
-if [ $# = 1 -a $1 = "-deploy" ]; then
+if [ $# = 1 -a x"$1" = x"-deploy" ]; then
   denv="-e DO_DEPLOY=1"
 fi
 
