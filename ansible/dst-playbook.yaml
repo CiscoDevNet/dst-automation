@@ -33,6 +33,7 @@
           retries: 60
           wait_for:
             - "result[0] contains Status: REGISTERED"
+        when: smart_license_token is defined
         tags: test
 
       - name: Copy VPN profile to firewall
