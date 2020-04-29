@@ -1,5 +1,7 @@
 # Dynamic Split Tunneling Automation
 
+[![published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/CiscoDevNet/dst-automation)
+
 ## Introduction
 
 When you're working from remote, you want to make sure you have a secure connection back to your office and to the corporate resources you need to do your job.  Therefore, many corporate IT organizations insist that all remote traffic is tunneled over a VPN.  Today, due to COVID-19, there are _so_ many users working remotely that pushing all remote traffic over the VPN can and is overwhelming the corporate bandwidth and the VPN headends.
