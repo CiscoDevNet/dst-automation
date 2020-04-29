@@ -16,7 +16,7 @@ You can read more on DST, its benefits, and how it's configured in this [blog](h
 
 ## DST Automation
 
-This repository contains code that one can use to test and deploy Dynamic Split Tunneling configuration changes using [Cisco Modeling Labs](https://developer.cisco.com/modeling-labs) (CML) and [Ansible](https://www.ansible.com).  The code does the following:
+This repository contains code that one can use to test and deploy Dynamic Split Tunneling configuration changes using [Cisco Modeling Labs](https://developer.cisco.com/modeling-labs) (CML) and [Ansible](https://www.ansible.com).  Before getting started, clone this repo using the command `git clone https://github.com/CiscoDevNet/dst-automation`.  Once you have the repo, this code does the following:
 
 1. Spins up a [Docker](https://www.docker.com) container
 2. Creates a test topology in CML
@@ -68,4 +68,3 @@ Now that you've seen a test run, you can re-run the `docker.sh` command with the
 ```sh
 $ ./docker.sh -deploy
 ```
-
