@@ -238,10 +238,14 @@ def main():
 
     msg = "Testing VPN tunneled hosts..."
     with Spinner(msg):
+        if "hq_server_ip" in conf["test"]:
+            # Append the internal host for testing.
+            conf["test"]["tunnel_hosts"].append(conf["test"]["hq_server_ip"])
+
+        print("")
         for host in conf["test"]["tunnel_hosts"]:
             imsg = "\tInspecting route to {}".format(host)
             rt = None
-            print("")
             with Spinner(imsg):
                 rt = run_traceroute(host)
             bad = False
@@ -250,18 +254,18 @@ def main():
                 tests_passed = False
 
             if bad:
-                sys.stdout.write(imsg + "[\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
+                sys.stdout.write(imsg + " [\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
             else:
-                sys.stdout.write(imsg + "[\033[32mOK\033[0m] {}\n".format(", ".join(rt)))
+                sys.stdout.write(imsg + " [\033[32mOK\033[0m] ({})\n".format(", ".join(rt)))
 
     done(msg)
 
     msg = "Testing Split Tunnel hosts..."
     with Spinner(msg):
+        print("")
         for host in conf["test"]["local_hosts"]:
             imsg = "\tInspecting route to {}".format(host)
             rt = None
-            print("")
             with Spinner(imsg):
                 rt = run_traceroute(host)
             i = 0
@@ -275,9 +279,9 @@ def main():
                 i += 1
 
             if bad:
-                sys.stdout.write(imsg + "[\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
+                sys.stdout.write(imsg + " [\033[33mWARNING\033[0m] Unexpected route: {}\n".format(", ".join(rt)))
             else:
-                sys.stdout.write(imsg + "[\033[32mOK\033[0m] {}\n".format(", ".join(rt)))
+                sys.stdout.write(imsg + " [\033[32mOK\033[0m] ({})\n".format(", ".join(rt)))
 
     done(msg)
 
@@ -305,6 +309,7 @@ def main():
         print("WARNING: Failed to cleanup after the test: {}".format(e))
         sys.exit(1)
 
+    print("")
     if tests_passed:
         sys.stdout.write("All tests \033[32mPASSED\033[0m!\n")
     else:
