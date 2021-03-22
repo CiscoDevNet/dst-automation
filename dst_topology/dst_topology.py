@@ -246,7 +246,7 @@ class DSTTopology(object):
 
 
 if __name__ == "__main__":
-    dstt = DSTTopology("192.168.10.229", "../base_configs")
+    dstt = DSTTopology("cml.marcuscom.com", "../base_configs")
     dstt.create_topology()
     dstt.start()
     while not dstt.is_ready():
