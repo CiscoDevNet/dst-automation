@@ -1,4 +1,4 @@
-ansible==2.9.18
+ansible==2.9.20
 bcrypt==3.1.7
 certifi==2020.4.5.1
 cffi==1.14.0
@@ -15,4 +15,4 @@ requests==2.23.0
 scp==0.13.2
 six==1.14.0
 urllib3==1.25.9
-virl2-client==2.0.0b5
+virl2-client
